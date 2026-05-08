@@ -1,7 +1,5 @@
 import type { RiverDataResponse, RiverStation } from "@/lib/types";
 
-const WEATHER_URL = "https://api.open-meteo.com/v1/forecast";
-const RIVER_GEOCODING_URL = "https://nominatim.openstreetmap.org/search";
 const RHMZ_NRT_URL = "https://hidmet.gov.rs/ciril/osmotreni/nrt_index.php";
 const RHMZ_STATION_URL = "https://hidmet.gov.rs/ciril/osmotreni/nrt_tabela_grafik.php";
 const CACHE_TTL_SECONDS = 1800;
@@ -190,67 +188,6 @@ function saveCachePayload(cacheKey: string, payload: RiverDataResponse): void {
   });
 }
 
-async function fetchWeatherForRiver(river: string, timezone: string) {
-  const riverQuery = `${river} river, Serbia`;
-  const geoUrl = new URL(RIVER_GEOCODING_URL);
-  geoUrl.searchParams.set("q", riverQuery);
-  geoUrl.searchParams.set("format", "jsonv2");
-  geoUrl.searchParams.set("limit", "1");
-
-  const geoRes = await fetch(geoUrl.toString(), {
-    headers: { "User-Agent": "FishingMate/1.0 (educational-use)" },
-    next: { revalidate: 600 },
-  });
-  if (!geoRes.ok) return null;
-
-  const geoPayload = (await geoRes.json()) as Array<{ lat?: string; lon?: string; display_name?: string }>;
-  if (!Array.isArray(geoPayload) || geoPayload.length === 0) return null;
-
-  const first = geoPayload[0];
-  const lat = first.lat ? Number.parseFloat(first.lat) : Number.NaN;
-  const lon = first.lon ? Number.parseFloat(first.lon) : Number.NaN;
-  if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
-
-  const weatherUrl = new URL(WEATHER_URL);
-  weatherUrl.searchParams.set("latitude", String(lat));
-  weatherUrl.searchParams.set("longitude", String(lon));
-  weatherUrl.searchParams.set("timezone", timezone);
-  weatherUrl.searchParams.set("current", "temperature_2m,wind_speed_10m,wind_direction_10m");
-  weatherUrl.searchParams.set("daily", "temperature_2m_max,temperature_2m_min,wind_speed_10m_max");
-  weatherUrl.searchParams.set("forecast_days", "3");
-
-  const weatherRes = await fetch(weatherUrl.toString(), { next: { revalidate: 600 } });
-  if (!weatherRes.ok) return null;
-
-  const payload = (await weatherRes.json()) as {
-    current?: Record<string, number>;
-    daily?: {
-      time?: string[];
-      temperature_2m_max?: Array<number | null>;
-      temperature_2m_min?: Array<number | null>;
-      wind_speed_10m_max?: Array<number | null>;
-    };
-  };
-
-  const dates = payload.daily?.time ?? [];
-  const tmax = payload.daily?.temperature_2m_max ?? [];
-  const tmin = payload.daily?.temperature_2m_min ?? [];
-  const wmax = payload.daily?.wind_speed_10m_max ?? [];
-
-  return {
-    location_label: first.display_name ?? null,
-    latitude: lat,
-    longitude: lon,
-    current: payload.current ?? {},
-    forecast: dates.map((date, i) => ({
-      date,
-      temp_max_c: tmax[i] ?? null,
-      temp_min_c: tmin[i] ?? null,
-      wind_max_kmh: wmax[i] ?? null,
-    })),
-  };
-}
-
 export async function getRiverData(river: string, timezone: string): Promise<RiverDataResponse> {
   const cacheKey = cacheKeyForRiver(river, timezone);
   const freshCache = getCachedPayload(cacheKey);
@@ -333,8 +270,6 @@ export async function getRiverData(river: string, timezone: string): Promise<Riv
           )
         : null;
 
-    const weather = await fetchWeatherForRiver(river, timezone);
-
     const payload: RiverDataResponse = {
       generated_at: new Date().toISOString(),
       app_mode: "water_level_cm",
@@ -351,8 +286,7 @@ export async function getRiverData(river: string, timezone: string): Promise<Riv
         steady_count: steadyCount,
       },
       stations,
-      weather,
-      sources: ["RHMZ Serbia real-time hydrology stations", "Open-Meteo weather forecast"],
+      sources: ["RHMZ Serbia real-time hydrology stations"],
       note: "Water level values are in centimeters (cm). Trend is calculated from latest minus previous station reading.",
       cache: {
         used: false,

@@ -31,18 +31,6 @@ export type RiverDataResponse = {
     steady_count: number;
   };
   stations: RiverStation[];
-  weather: {
-    location_label: string | null;
-    latitude: number | null;
-    longitude: number | null;
-    current: Record<string, number | string | null>;
-    forecast: Array<{
-      date: string;
-      temp_max_c: number | null;
-      temp_min_c: number | null;
-      wind_max_kmh: number | null;
-    }>;
-  } | null;
   sources: string[];
   note: string;
   cache: {
