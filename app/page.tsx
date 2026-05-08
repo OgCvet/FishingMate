@@ -29,22 +29,74 @@ function windDirectionLabel(degrees: number | null | undefined): string {
   ];
   const normalized = ((degrees % 360) + 360) % 360;
   const index = Math.round(normalized / 45) % 8;
-  return directions[index] ?? "N/A";
+  const direction = directions[index] ?? "N/A";
+  return direction.charAt(0).toUpperCase() + direction.slice(1);
+}
+
+const cyrToLatMap: Record<string, string> = {
+  а: "a", б: "b", в: "v", г: "g", д: "d", ђ: "dj", е: "e", ж: "z", з: "z", и: "i", ј: "j",
+  к: "k", л: "l", љ: "lj", м: "m", н: "n", њ: "nj", о: "o", п: "p", р: "r", с: "s", т: "t",
+  ћ: "c", у: "u", ф: "f", х: "h", ц: "c", ч: "c", џ: "dz", ш: "s",
+  А: "A", Б: "B", В: "V", Г: "G", Д: "D", Ђ: "Dj", Е: "E", Ж: "Z", З: "Z", И: "I", Ј: "J",
+  К: "K", Л: "L", Љ: "Lj", М: "M", Н: "N", Њ: "Nj", О: "O", П: "P", Р: "R", С: "S", Т: "T",
+  Ћ: "C", У: "U", Ф: "F", Х: "H", Ц: "C", Ч: "C", Џ: "Dz", Ш: "S",
+};
+
+function normalizeLookup(value: string): string {
+  const translated = value
+    .split("")
+    .map((char) => cyrToLatMap[char] ?? char)
+    .join("");
+
+  return translated
+    .normalize("NFKD")
+    .replace(/[^\x00-\x7F]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 export default function HomePage() {
-  const [river, setRiver] = useState("Danube");
-  const [city, setCity] = useState("Beograd");
+  const [river, setRiver] = useState("");
+  const [city, setCity] = useState("");
   const [cityWeather, setCityWeather] = useState<CityWeatherResponse | null>(null);
   const [status, setStatus] = useState("Unesi reku i grad, pa pokreni pretragu.");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<RiverDataResponse | null>(null);
+  const [isNight, setIsNight] = useState(false);
+
+  const cityLevelMatch = data
+    ? (() => {
+        const normalizedCity = normalizeLookup(city);
+        if (!normalizedCity) return null;
+        return (
+          data.stations.find((station) => {
+            const normalizedStation = normalizeLookup(station.station);
+            return (
+              normalizedStation.includes(normalizedCity) ||
+              normalizedCity.includes(normalizedStation)
+            );
+          }) ?? null
+        );
+      })()
+    : null;
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => undefined);
     }
+  }, []);
+
+  useEffect(() => {
+    function refreshDayPhase() {
+      const hour = new Date().getHours();
+      setIsNight(hour < 6 || hour >= 20);
+    }
+
+    refreshDayPhase();
+    const timer = window.setInterval(refreshDayPhase, 60_000);
+    return () => window.clearInterval(timer);
   }, []);
 
   async function onSubmit(event: FormEvent) {
@@ -100,7 +152,39 @@ export default function HomePage() {
   }
 
   return (
-    <main className="page">
+    <main className={`page scene ${isNight ? "night" : "day"}`}>
+      <div className="nature-bg" aria-hidden="true">
+        <div className="sky-layer">
+          <div className="sun" />
+          <div className="moon" />
+          <div className="stars">
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+            <span />
+          </div>
+        </div>
+        <div className="river-layer">
+          <div className="river-wave river-wave-1" />
+          <div className="river-wave river-wave-2" />
+          <div className="boat boat-1">
+            <span className="hull" />
+            <span className="mast" />
+          </div>
+          <div className="boat boat-2">
+            <span className="hull" />
+            <span className="mast" />
+          </div>
+          <div className="boat boat-3">
+            <span className="hull" />
+            <span className="mast" />
+          </div>
+        </div>
+      </div>
       <section className="hero">
         <p className="badge">Fishing Mate</p>
         <h1>Vodostaj i vreme na jednom mestu</h1>
@@ -125,7 +209,7 @@ export default function HomePage() {
                   name="river"
                   value={river}
                   onChange={(event) => setRiver(event.target.value)}
-                  placeholder="npr. Danube/Dunav, Sava, Tisa, Drina, Morava"
+                  placeholder="Unesi naziv reke (npr. Dunav, Sava, Tisa...)"
                   required
                   list="riverSuggestions"
                 />
@@ -150,7 +234,7 @@ export default function HomePage() {
                   name="city"
                   value={city}
                   onChange={(event) => setCity(event.target.value)}
-                  placeholder="npr. Beograd, Novi Sad, Niš"
+                  placeholder="Unesi grad (npr. Beograd, Novi Sad, Niš...)"
                   required
                 />
               </div>
@@ -192,8 +276,15 @@ export default function HomePage() {
         <>
           <section className="grid">
             <article className="card metric">
-              <h2>Prosečan vodostaj</h2>
-              <p className="big">{formatNum(data.summary.average_water_level_cm, " cm")}</p>
+              <h2>Vodostaj za grad</h2>
+              <p className="big">
+                {cityLevelMatch ? formatNum(cityLevelMatch.water_level_cm, " cm") : "Nema stanice"}
+              </p>
+              {cityLevelMatch && (
+                <p className="status">
+                  Stanica: {cityLevelMatch.station}
+                </p>
+              )}
             </article>
             <article className="card metric">
               <h2>Najviša stanica</h2>
@@ -246,7 +337,10 @@ export default function HomePage() {
       )}
 
       <section className="legal">
-        <p>Izvor: RHMZ Srbija (stanice u realnom vremenu). Vodostaj je prikazan u centimetrima (cm).</p>
+        <p>Izvori podataka:</p>
+        <p>- RHMZ Srbija (hidrološke stanice u realnom vremenu, vodostaj u cm)</p>
+        <p>- Open-Meteo Geocoding API (pronalaženje lokacije za uneti grad)</p>
+        <p>- Open-Meteo Forecast API (trenutna temperatura, brzina vetra i smer vetra)</p>
       </section>
     </main>
   );

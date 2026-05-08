@@ -1,12 +1,12 @@
 :root {
   --bg: #06131d;
   --bg-2: #102b36;
-  --card: rgba(9, 29, 39, 0.8);
+  --card: rgba(9, 29, 39, 0.62);
   --text: #ecfeff;
   --muted: #9dd3df;
   --accent: #38bdf8;
   --accent-2: #34d399;
-  --border: rgba(103, 232, 249, 0.28);
+  --border: rgba(103, 232, 249, 0.22);
 }
 
 * {
@@ -31,6 +31,211 @@ body {
   width: min(1100px, 92%);
   margin: 28px auto 50px;
   padding-bottom: env(safe-area-inset-bottom);
+  position: relative;
+  z-index: 1;
+}
+
+.scene.day {
+  --sun-opacity: 1;
+  --moon-opacity: 0;
+  --stars-opacity: 0;
+}
+
+.scene.night {
+  --sun-opacity: 0;
+  --moon-opacity: 1;
+  --stars-opacity: 1;
+}
+
+.nature-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.sky-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.sun,
+.moon {
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  top: 28px;
+  right: 34px;
+  transition: opacity 0.9s ease;
+}
+
+.sun {
+  background: radial-gradient(circle, #fff7c2 0%, #fde68a 45%, #f59e0b 100%);
+  box-shadow: 0 0 42px rgb(251 191 36 / 45%);
+  opacity: var(--sun-opacity, 1);
+}
+
+.moon {
+  background: radial-gradient(circle, #f8fafc 0%, #cbd5e1 70%);
+  box-shadow: 0 0 30px rgb(148 163 184 / 40%);
+  opacity: var(--moon-opacity, 0);
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  opacity: var(--stars-opacity, 0);
+  transition: opacity 0.9s ease;
+}
+
+.stars span {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 0 8px rgb(255 255 255 / 85%);
+  animation: twinkle 2.6s infinite ease-in-out;
+}
+
+.stars span:nth-child(1) { top: 11%; left: 12%; animation-delay: 0s; }
+.stars span:nth-child(2) { top: 16%; left: 24%; animation-delay: 0.4s; }
+.stars span:nth-child(3) { top: 9%; left: 44%; animation-delay: 0.8s; }
+.stars span:nth-child(4) { top: 18%; left: 58%; animation-delay: 1s; }
+.stars span:nth-child(5) { top: 12%; left: 73%; animation-delay: 0.2s; }
+.stars span:nth-child(6) { top: 7%; left: 82%; animation-delay: 0.7s; }
+.stars span:nth-child(7) { top: 21%; left: 36%; animation-delay: 1.2s; }
+.stars span:nth-child(8) { top: 24%; left: 68%; animation-delay: 1.5s; }
+
+.river-layer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 170px;
+  overflow: hidden;
+}
+
+.river-wave {
+  position: absolute;
+  left: -20%;
+  right: -20%;
+  bottom: 0;
+  height: 120px;
+  border-radius: 42% 58% 0 0;
+  background: linear-gradient(180deg, rgb(56 189 248 / 25%), rgb(14 116 144 / 45%));
+  z-index: 1;
+}
+
+.river-wave-1 {
+  animation: waveMove 8s linear infinite;
+}
+
+.river-wave-2 {
+  bottom: 10px;
+  opacity: 0.6;
+  animation: waveMove 12s linear infinite reverse;
+}
+
+.boat {
+  position: absolute;
+  bottom: 54px;
+  width: 64px;
+  height: 22px;
+  animation: boatFloat 3.2s ease-in-out infinite;
+  z-index: 2;
+}
+
+.boat-1 {
+  left: -80px;
+  animation: boatSailRight 20s linear infinite, boatFloat 3.2s ease-in-out infinite;
+}
+
+.boat-2 {
+  right: -80px;
+  transform: scaleX(-1);
+  animation: boatSailLeft 27s linear infinite, boatFloat 4s ease-in-out infinite;
+}
+
+.boat-3 {
+  left: -120px;
+  bottom: 30px;
+  width: 52px;
+  height: 18px;
+  animation: boatSailRightSlow 34s linear infinite, boatFloat 4.5s ease-in-out infinite;
+}
+
+.boat .hull {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(180deg, #334155, #1e293b);
+  clip-path: polygon(8% 20%, 92% 20%, 82% 86%, 18% 86%);
+  border-radius: 4px;
+}
+
+.boat .mast {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 20px;
+  width: 2px;
+  height: 22px;
+  background: #e2e8f0;
+}
+
+.boat-2 .hull {
+  background: linear-gradient(180deg, #7c2d12, #431407);
+  clip-path: polygon(4% 28%, 96% 28%, 78% 88%, 22% 88%);
+}
+
+.boat-2 .mast {
+  background: #fef3c7;
+}
+
+.boat-3 .hull {
+  background: linear-gradient(180deg, #14532d, #052e16);
+  clip-path: polygon(10% 18%, 90% 18%, 85% 84%, 15% 84%);
+  border-radius: 8px 8px 4px 4px;
+}
+
+.boat-3 .mast {
+  width: 1px;
+  height: 16px;
+  bottom: 14px;
+  background: #d1fae5;
+}
+
+@keyframes waveMove {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(12%); }
+}
+
+@keyframes boatSailRight {
+  0% { left: -80px; }
+  100% { left: calc(100% + 80px); }
+}
+
+@keyframes boatSailLeft {
+  0% { right: -80px; }
+  100% { right: calc(100% + 80px); }
+}
+
+@keyframes boatSailRightSlow {
+  0% { left: -120px; }
+  100% { left: calc(100% + 120px); }
+}
+
+@keyframes boatFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.35); }
 }
 
 .hero {
@@ -71,8 +276,8 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 14px 34px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 20%);
 }
 
 form {
@@ -86,7 +291,7 @@ form {
 .command-center {
   position: relative;
   overflow: hidden;
-  border: 1px solid rgb(56 189 248 / 35%);
+  border: 1px solid rgb(56 189 248 / 28%);
 }
 
 .command-center::before {
@@ -120,11 +325,11 @@ form {
 }
 
 .control-tile {
-  border: 1px solid rgb(125 211 252 / 28%);
+  border: 1px solid rgb(125 211 252 / 22%);
   border-radius: 14px;
   padding: 14px;
-  background: linear-gradient(150deg, rgb(11 35 47 / 95%), rgb(10 24 33 / 88%));
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 2%);
+  background: linear-gradient(150deg, rgb(11 35 47 / 72%), rgb(10 24 33 / 62%));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 3%);
 }
 
 .control-tile h3 {
@@ -244,7 +449,10 @@ th {
 
 .legal p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: 11px;
+  line-height: 1.25;
+  opacity: 0.78;
+  margin: 2px 0;
 }
 
 @media (max-width: 900px) {
@@ -322,6 +530,30 @@ th {
 
   .status {
     font-size: 13px;
+  }
+
+  .sun,
+  .moon {
+    width: 58px;
+    height: 58px;
+    top: 22px;
+    right: 18px;
+  }
+
+  .river-layer {
+    height: 130px;
+  }
+
+  .boat {
+    bottom: 40px;
+    width: 52px;
+    height: 18px;
+  }
+
+  .boat-3 {
+    bottom: 28px;
+    width: 44px;
+    height: 15px;
   }
 
   .metric h2 {
@@ -404,6 +636,11 @@ th {
 
   .status {
     line-height: 1.35;
+  }
+
+  .stars span {
+    width: 2px;
+    height: 2px;
   }
 }
 

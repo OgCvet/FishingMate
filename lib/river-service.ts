@@ -125,7 +125,7 @@ function parseRhmzRows(htmlText: string) {
 
 function parseStationRecentLevels(htmlText: string): number[] {
   const pattern =
-    /<td class="(?:bela75|siva75) [^"]*">&nbsp;\s*-?\d+\s*<\/td>\s*<td class="(?:bela75|siva75) ">&nbsp;\s*(?<level>-?\d+)\s*<\/td>/gs;
+    /<tr>\s*<td class="(?:bela75|siva75) levo">&nbsp;[^<]*<\/td>\s*<td class="(?:bela75|siva75) ">&nbsp;\s*(?<level>-?\d+)\s*<\/td>\s*<\/tr>/gs;
   const levels: number[] = [];
 
   for (const match of htmlText.matchAll(pattern)) {
