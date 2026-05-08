@@ -1,0 +1,16 @@
+{
+  "name": "Fishing Mate",
+  "short_name": "FishingMate",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06131d",
+  "theme_color": "#0a2230",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
